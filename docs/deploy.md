@@ -214,9 +214,9 @@ Production деплой **изисква човешко одобрение**. Е
 в скрипт, за да е възпроизводимо и одитируемо вместо невидим клик в UI-я:
 
 ```bash
-REVIEWER_TEAMS="midt-bg/maintainers" ./scripts/provision-environments.sh   # required reviewers + v* tag policy
-# или с конкретни хора:
-REVIEWER_USERS="alice,bob" ./scripts/provision-environments.sh
+REVIEWER_USERS="cefothe" ./scripts/provision-environments.sh   # required reviewers + v* tag policy
+# или с екип:
+REVIEWER_TEAMS="midt-bg/maintainers" ./scripts/provision-environments.sh
 ```
 
 Скриптът ([scripts/provision-environments.sh](../scripts/provision-environments.sh)) задава на
