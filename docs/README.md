@@ -10,6 +10,7 @@
 - [`etl-pipeline-state.md`](etl-pipeline-state.md) — анализ на текущото състояние на ETL pipeline-а.
 - [`etl-architecture.md`](etl-architecture.md) — целевата ETL архитектура (RFC): предложение за състоянието и реда на изпълнение.
 - [`v1-implementation-plan.md`](v1-implementation-plan.md) — precompute слоят и пагинацията (защо rollup-и и keyset вместо per-request GROUP BY / OFFSET).
+- [`implementation-plans/230-issue-claim-bot.md`](implementation-plans/230-issue-claim-bot.md) — план за внедряване на бота за заявяване на Issue-та (`/assign`) срещу дублирана работа (#230).
 - [`implementation-plans/286-ocds-amendment-unp.md`](implementation-plans/286-ocds-amendment-unp.md) — защо OCDS анексите не се свързват с договор (OCID вместо УНП) и планът за поправка през bridge-а `tender.id → УНП` + prefer-EOP dedup (#286).
 <<<<<<< HEAD
 - [`implementation-plans/306-amendment-contract-namespace-link.md`](implementation-plans/306-amendment-contract-namespace-link.md) — защо 1 937 EOP анекса не се свързват с договор (номерът на анекса е в друго именно пространство от деловодния номер) и планът за поправка чрез value-anchor (`value_before → signing_value`, 99.99% точност) (#306).
