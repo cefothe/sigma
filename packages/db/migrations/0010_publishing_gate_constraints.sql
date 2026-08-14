@@ -9,7 +9,7 @@
 -- `UPDATE … SET status='published '` during an incident actually lands.
 --
 -- So 0003 stays byte-identical to what was applied, and enforcement lives here, reached by both paths:
--- a fresh chain runs 0007 after 0003, and a deployed database gets it as a retrofit. One shape, one
+-- a fresh chain runs 0010 after 0003, and a deployed database gets it as a retrofit. One shape, one
 -- mechanism. `packages/db/src/migrations.test.ts` holds the two shapes to the same rejections and the same
 -- acceptances, so this stays true rather than merely intended.
 --
@@ -23,7 +23,7 @@
 --
 -- A BEFORE INSERT/UPDATE trigger that RAISEs enforces the identical invariant for every writer — including
 -- the hand-run UPDATE above, which no CHECK on a legacy table would ever have covered — with no rebuild,
--- no FK exposure and no seal loss. 0006 keeps its own CHECKs: it is NEW in this change, has never been
+-- no FK exposure and no seal loss. 0009 keeps its own CHECKs: it is NEW in this change, has never been
 -- applied to a served environment, so declaring them there edits no applied history.
 --
 -- WHY IT IS SAFE TO RE-RUN: migrations here are applied by a bare `wrangler d1 execute --file` with no
@@ -59,7 +59,7 @@
 -- The subtraction is parenthesised deliberately: `||` binds TIGHTER than `-` in SQLite, so without it
 -- this reads as ('…' || countA) - (countB || '…') — two strings coerced to numbers — and reports a
 -- meaningless figure instead of the row count. It did, before a real apply showed „notice: -2".
-SELECT 'migration 0007: collapsing ' ||
+SELECT 'migration 0010: collapsing ' ||
        ((SELECT COUNT(*) FROM declarations) -
         (SELECT COUNT(*) FROM (SELECT 1 FROM declarations
                                GROUP BY xml_file, folder_year, COALESCE(control_hash, '')))) ||
@@ -98,7 +98,7 @@ END;
 -- ── interest_link_evidence: evidence_kind ───────────────────────────────────────────────────────────
 -- The read gate filters on this column — SURFACED_OWNERSHIP admits exactly 'document' and 'confirmed' —
 -- so an unlisted value either silently stops a link surfacing or, if it collides with a publishing name,
--- surfaces one that was never proven. 0006 declares this as a CHECK for new databases; the trigger is
+-- surfaces one that was never proven. 0009 declares this as a CHECK for new databases; the trigger is
 -- the same rule for those provisioned before it.
 DROP TRIGGER IF EXISTS trg_ile_kind_ins;
 CREATE TRIGGER trg_ile_kind_ins

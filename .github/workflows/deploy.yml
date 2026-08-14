@@ -145,20 +145,22 @@ jobs:
           pnpm --filter @sigma/web exec wrangler d1 execute "${SIGMA_D1_NAME:-sigma}" \
             --config wrangler.deploy.jsonc --remote --yes \
             --file ../../packages/db/migrations/0003_related_persons_foundation.sql
-          # 0006 attaches the Trade Register evidence seal (#279, ADR-0033). Both migrations are
+          # 0009 attaches the Trade Register evidence seal (#279, ADR-0033). Both migrations are
           # applied by name here because wrangler's migration ledger is empty on this D1 (the base
           # schema was created out-of-band), so `d1 migrations apply` would collide on 0000.
           pnpm --filter @sigma/web exec wrangler d1 execute "${SIGMA_D1_NAME:-sigma}" \
             --config wrangler.deploy.jsonc --remote --yes \
-            --file ../../packages/db/migrations/0006_interest_link_evidence.sql
-          # 0007 retrofits the publishing-gate CHECK constraints and control_hash NOT NULL onto an
-          # ALREADY-PROVISIONED D1 (#279 §2). 0003 declares them now, but `CREATE TABLE IF NOT EXISTS`
-          # never revisits an existing table and the ship step wipes ROWS, not definitions — so without
-          # this a live database keeps the unconstrained shape no matter how often the data reloads.
-          # Rebuild-based and therefore idempotent: re-applying copies an already-constrained table.
+            --file ../../packages/db/migrations/0009_interest_link_evidence.sql
+          # 0010 enforces the publishing-gate invariant on an ALREADY-PROVISIONED D1 (#279 §2) with
+          # BEFORE INSERT/UPDATE triggers — not table CHECKs and not a rebuild. 0003 stays byte-identical
+          # and unconstrained (`CREATE TABLE IF NOT EXISTS` never revisits an existing table and the ship
+          # step wipes ROWS, not definitions), so enforcement lives here, where a fresh chain and a live
+          # database both reach it; a rebuild would strip the 0009 evidence seals, and control_hash is left
+          # NULLABLE on purpose (see the migration header). Idempotent because every statement is
+          # DROP TRIGGER IF EXISTS / CREATE … IF NOT EXISTS: re-applying converges to the same state.
           pnpm --filter @sigma/web exec wrangler d1 execute "${SIGMA_D1_NAME:-sigma}" \
             --config wrangler.deploy.jsonc --remote --yes \
-            --file ../../packages/db/migrations/0007_publishing_gate_constraints.sql
+            --file ../../packages/db/migrations/0010_publishing_gate_constraints.sql
       # The base schema was created out-of-band with `d1 execute --file`, so wrangler's migration
       # ledger is empty and `d1 migrations apply` would collide on 0000. Probe the actual table
       # instead. SQLite has no `ADD COLUMN IF NOT EXISTS`; a completion-marker table is created only

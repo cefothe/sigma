@@ -125,7 +125,7 @@ interface HitRow {
 // related-persons-sql.test.ts pins them to each other.
 // Exported so search-sql.test runs the EXACT SQL (not a copy).
 // Built with or without the conflict join. The join reads BOTH свързани-лица migrations — interest_links
-// (0003) and interest_link_evidence (0006) — and on an env where either is unapplied it would make the
+// (0003) and interest_link_evidence (0009) — and on an env where either is unapplied it would make the
 // ENTIRE search 500 with „no such table". search() detects both tables once per request and picks the
 // no-conflict variant when either is absent, so search degrades to has_conflict=0 rather than breaking
 // (ADR-0031 robustness ask).
@@ -175,7 +175,7 @@ export async function search(db: D1Database, rawQuery: string): Promise<SearchRe
   // would 500 the whole search — fall back to the no-conflict variant (has_conflict=0) instead.
   //
   // BOTH tables are required, not just interest_links: the join now also reads interest_link_evidence
-  // (0006), so an env with 0003 but not 0006 would break every search on every kind. Requiring both also
+  // (0009), so an env with 0003 but not 0009 would break every search on every kind. Requiring both also
   // gives the right answer on such an env — with no seal table nothing is provably sealed, so nothing
   // should badge.
   const hasConflictTable =

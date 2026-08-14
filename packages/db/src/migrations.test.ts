@@ -11,8 +11,8 @@ const migration0 = resolve(root, 'packages/db/migrations/0000_init.sql');
 const migration1 = resolve(root, 'packages/db/migrations/0001_flow_pairs_bidder_index.sql');
 const migration2 = resolve(root, 'packages/db/migrations/0002_current_value_currency.sql');
 const migration3 = resolve(root, 'packages/db/migrations/0003_related_persons_foundation.sql');
-const migration6 = resolve(root, 'packages/db/migrations/0006_interest_link_evidence.sql');
-const migration7 = resolve(root, 'packages/db/migrations/0007_publishing_gate_constraints.sql');
+const migration9 = resolve(root, 'packages/db/migrations/0009_interest_link_evidence.sql');
+const migration10 = resolve(root, 'packages/db/migrations/0010_publishing_gate_constraints.sql');
 const backfill = resolve(root, 'scripts/backfill-current-value-currency.sql');
 const precompute = resolve(root, 'scripts/precompute.sql');
 
@@ -133,7 +133,7 @@ describe('served migrations', () => {
       );
       readScript(dbPath, migration2);
       readScript(dbPath, migration3);
-      readScript(dbPath, migration6);
+      readScript(dbPath, migration9);
       readScript(dbPath, backfill);
       readScript(dbPath, precompute);
 
@@ -154,16 +154,16 @@ describe('served migrations', () => {
     }
   });
 
-  // 0006 attaches the Trade Register evidence seal to a link (#279, ADR-0033). A SIDE TABLE rather than
+  // 0009 attaches the Trade Register evidence seal to a link (#279, ADR-0033). A SIDE TABLE rather than
   // columns on interest_links, for two reasons that are easy to forget: SQLite's ADD COLUMN has no
   // IF NOT EXISTS and migrations are applied by a bare `d1 execute --file` with no tracking, so a
   // re-apply must be a no-op; and load.mjs rebuilds the CACBG tables from 0003 alone, so any column
   // added here would have to be duplicated into 0003 and kept in step forever.
-  it('0006 adds the evidence seal and re-applying it is a no-op', () => {
-    const dir = mkdtempSync(resolve(tmpdir(), 'sigma-migrations-0006-'));
+  it('0009 adds the evidence seal and re-applying it is a no-op', () => {
+    const dir = mkdtempSync(resolve(tmpdir(), 'sigma-migrations-0009-'));
     const dbPath = resolve(dir, 'test.sqlite');
     try {
-      for (const m of [migration0, migration1, migration2, migration3, migration6])
+      for (const m of [migration0, migration1, migration2, migration3, migration9])
         readScript(dbPath, m);
 
       expect(
@@ -188,7 +188,7 @@ describe('served migrations', () => {
            (link_key, evidence_kind, matched_fact, lookup_date, rules_version, live_status)
          VALUES ('k', 'document', 'role:owner:CR_F_19_L', '2026-08-05', 'tr-rules-1', 'live');`,
       );
-      readScript(dbPath, migration6); // idempotent re-apply
+      readScript(dbPath, migration9); // idempotent re-apply
       expect(sqlite(dbPath, 'SELECT COUNT(*) FROM interest_link_evidence;').trim()).toBe('1');
 
       // The FK is real: a seal for a link that does not exist is rejected. D1 enforces foreign keys,
@@ -215,7 +215,7 @@ describe('served migrations', () => {
     const dir = mkdtempSync(resolve(tmpdir(), 'sigma-migrations-'));
     const dbPath = resolve(dir, 'test.sqlite');
     try {
-      for (const m of [migration0, migration3, migration6, migration7]) readScript(dbPath, m);
+      for (const m of [migration0, migration3, migration9, migration10]) readScript(dbPath, m);
 
       const seedLink = (status: string) =>
         sqlite(
@@ -299,15 +299,15 @@ describe('served migrations', () => {
     }
   });
 
-  // THE POINT OF 0007, stated as an executable claim rather than a comment (todorkolev, #309).
+  // THE POINT OF 0010, stated as an executable claim rather than a comment (todorkolev, #309).
   //
   // 0003 is an ALREADY-APPLIED migration and is therefore never edited: `CREATE TABLE IF NOT EXISTS` is a
   // no-op on a live database, so an in-place CHECK would exist only on freshly built ones. That would put
   // two different schemas under one name — and the divergence would land precisely on the served database,
   // which is where a hand-run `UPDATE status='published '` during an incident actually happens.
   //
-  // So 0007 owns the enforcement for BOTH shapes, and this test is what keeps them one shape: a fresh
-  // 0000..0007 build and a legacy database retrofitted by 0007 must reject the SAME values and accept the
+  // So 0010 owns the enforcement for BOTH shapes, and this test is what keeps them one shape: a fresh
+  // 0000..0010 build and a legacy database retrofitted by 0010 must reject the SAME values and accept the
   // SAME values. If either drifts, the parity assertions below fail rather than a reviewer noticing.
   it('a fresh build and a retrofitted legacy database enforce the SAME gate', () => {
     const dir = mkdtempSync(resolve(tmpdir(), 'sigma-migrations-parity-'));
@@ -315,19 +315,19 @@ describe('served migrations', () => {
     const legacy = resolve(dir, 'legacy.sqlite');
     try {
       // (1) fresh: the migration chain exactly as a new environment applies it.
-      for (const m of [migration0, migration3, migration6, migration7]) readScript(fresh, m);
+      for (const m of [migration0, migration3, migration9, migration10]) readScript(fresh, m);
 
-      // (2) legacy: 0003 + 0006 as they were BEFORE this PR, then 0007 retrofits. `interest_links` is
+      // (2) legacy: 0003 + 0009 as they were BEFORE this PR, then 0010 retrofits. `interest_links` is
       // recreated without constraints because that is the shape every already-deployed database holds.
-      for (const m of [migration0, migration3, migration6]) readScript(legacy, m);
+      for (const m of [migration0, migration3, migration9]) readScript(legacy, m);
       sqlite(
         legacy,
         `DROP TABLE interest_link_evidence;
          DROP TABLE interest_links;
          CREATE TABLE interest_links (
            id TEXT PRIMARY KEY, link_key TEXT NOT NULL UNIQUE,
-           person_id TEXT NOT NULL REFERENCES persons(id), bidder_id TEXT NOT NULL, eik TEXT NOT NULL,
-           entity_key TEXT NOT NULL, match_method TEXT, matcher_version TEXT NOT NULL,
+           person_id TEXT NOT NULL REFERENCES persons(id), bidder_id TEXT NOT NULL REFERENCES bidders(id), eik TEXT NOT NULL,
+           entity_key TEXT NOT NULL, match_method TEXT NOT NULL DEFAULT 'exact_name_key', matcher_version TEXT NOT NULL,
            publish_tier TEXT NOT NULL, relation TEXT NOT NULL,
            interest_class TEXT NOT NULL DEFAULT 'management_role',
            contemporaneous INTEGER NOT NULL DEFAULT 0, own_institution TEXT NOT NULL DEFAULT 'none',
@@ -341,7 +341,7 @@ describe('served migrations', () => {
            lookup_date TEXT NOT NULL, rules_version TEXT NOT NULL, live_status TEXT NOT NULL,
            sealed_at TEXT NOT NULL DEFAULT (datetime('now')));`,
       );
-      readScript(legacy, migration7);
+      readScript(legacy, migration10);
 
       const link = (db: string, id: string, status: string, cls = 'private_ownership') =>
         sqlite(
@@ -388,15 +388,18 @@ describe('served migrations', () => {
   });
 
   // The retrofit has to be safe on a LIVE D1: ship-related-persons wipes rows, never table definitions,
-  // so a deployed database keeps its unconstrained 0003 shape until this migration rebuilds it.
-  it('0007 retrofits a pre-existing database, keeps its rows, and re-applies as a no-op', () => {
+  // so a deployed database keeps its unconstrained 0003 shape, and 0010 must enforce the gate over it with
+  // triggers — no rebuild, so no row is lost — and re-apply as a no-op.
+  it('0010 retrofits a pre-existing database, keeps its rows, and re-applies as a no-op', () => {
     const dir = mkdtempSync(resolve(tmpdir(), 'sigma-migrations-'));
     const dbPath = resolve(dir, 'test.sqlite');
     try {
-      for (const m of [migration0, migration3, migration6]) readScript(dbPath, m);
-      // Simulate a database provisioned BEFORE today: 0003 now declares the constraints, so the legacy
-      // shape has to be recreated explicitly. This is the state every already-deployed environment is in
-      // — `CREATE TABLE IF NOT EXISTS` never revisited it and ship-related-persons only wipes rows.
+      for (const m of [migration0, migration3, migration9]) readScript(dbPath, m);
+      // Simulate a database provisioned BEFORE the gate: pin the pre-gate `declarations` and
+      // `interest_links` shapes explicitly. This is the state every already-deployed environment is in —
+      // 0003 stays unconstrained (`CREATE TABLE IF NOT EXISTS` never revisits an existing table and
+      // ship-related-persons only wipes rows), so 0010 alone adds the natural-key index and the gate
+      // triggers over it.
       sqlite(
         dbPath,
         `DROP TABLE declarations;
@@ -408,8 +411,8 @@ describe('served migrations', () => {
          DROP TABLE interest_links;
          CREATE TABLE interest_links (
            id TEXT PRIMARY KEY, link_key TEXT NOT NULL UNIQUE,
-           person_id TEXT NOT NULL REFERENCES persons(id), bidder_id TEXT NOT NULL, eik TEXT NOT NULL,
-           entity_key TEXT NOT NULL, match_method TEXT, matcher_version TEXT NOT NULL,
+           person_id TEXT NOT NULL REFERENCES persons(id), bidder_id TEXT NOT NULL REFERENCES bidders(id), eik TEXT NOT NULL,
+           entity_key TEXT NOT NULL, match_method TEXT NOT NULL DEFAULT 'exact_name_key', matcher_version TEXT NOT NULL,
            publish_tier TEXT NOT NULL, relation TEXT NOT NULL,
            interest_class TEXT NOT NULL DEFAULT 'management_role', contemporaneous INTEGER NOT NULL DEFAULT 0,
            own_institution TEXT NOT NULL DEFAULT 'none', evidence_count INTEGER NOT NULL DEFAULT 1,
@@ -441,7 +444,7 @@ describe('served migrations', () => {
                  'private_ownership', 'published ');`,
       );
 
-      readScript(dbPath, migration7);
+      readScript(dbPath, migration10);
       // The valid rows survive — nothing is rebuilt, so nothing can be lost…
       expect(sqlite(dbPath, "SELECT id FROM declarations WHERE id='d:keep';").trim()).toBe(
         'd:keep',
@@ -490,7 +493,7 @@ describe('served migrations', () => {
 
       // Migrations here are applied by a bare `d1 execute --file` with no applied-migrations tracking,
       // so a second application MUST be a no-op rather than an error or a data loss.
-      readScript(dbPath, migration7);
+      readScript(dbPath, migration10);
       expect(sqlite(dbPath, 'SELECT COUNT(*) FROM interest_links;').trim()).toBe('2');
       expect(sqlite(dbPath, "SELECT id FROM declarations WHERE id='d:keep';").trim()).toBe(
         'd:keep',

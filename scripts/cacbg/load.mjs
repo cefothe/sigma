@@ -43,12 +43,12 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '.
 const DB = process.env.CACBG_DB || path.join(ROOT, 'data/work/backfill.sqlite');
 const STAGING = process.env.CACBG_STAGING || path.join(ROOT, 'scratch/cacbg/staging');
 const MIGRATION = path.join(ROOT, 'packages/db/migrations/0003_related_persons_foundation.sql');
-// 0006 attaches the Trade Register evidence seal (#279, ADR-0033). Applied here as well as 0003
+// 0009 attaches the Trade Register evidence seal (#279, ADR-0033). Applied here as well as 0003
 // because this loader rebuilds the CACBG tables from the migrations on every run — a seal table
 // missing from the work DB would make every evidence write fail at ship time instead of at load.
 const MIGRATION_EVIDENCE = path.join(
   ROOT,
-  'packages/db/migrations/0006_interest_link_evidence.sql',
+  'packages/db/migrations/0009_interest_link_evidence.sql',
 );
 const REPORT = path.join(STAGING, 'findings.md');
 // Bumped for #279: classify-2 (КДА added to the joint-stock bar) + tr-1 (identity now rests on a
@@ -567,7 +567,7 @@ const insLink = db.prepare(
 const insILA = db.prepare(
   'INSERT OR IGNORE INTO interest_link_authorities(link_key,authority_id,authority_name,contract_count,value_eur,own) VALUES(?,?,?,?,?,?)',
 );
-// The evidence seal (#279 §8, migration 0006). Written for EVERY link, not only published ones — the
+// The evidence seal (#279 §8, migration 0009). Written for EVERY link, not only published ones — the
 // seals on held and withdrawn links are what let the review queue explain itself. `matched_fact` is a
 // closed vocabulary and must NEVER carry a name; the audit enforces that with a pattern check.
 const insEvidence = db.prepare(

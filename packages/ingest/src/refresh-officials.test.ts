@@ -20,9 +20,9 @@ const migrations = [
   '0000_init.sql',
   '0001_flow_pairs_bidder_index.sql',
   '0003_related_persons_foundation.sql',
-  // The officials batch now joins the Trade Register evidence seal (#279, ADR-0033) — without 0006 the
+  // The officials batch now joins the Trade Register evidence seal (#279, ADR-0033) — without 0009 the
   // real refresh-slice.sql this test executes cannot parse.
-  '0006_interest_link_evidence.sql',
+  '0009_interest_link_evidence.sql',
 ].map((f) => resolve(root, 'packages/db/migrations', f));
 const refreshSlicePath = resolve(root, 'scripts/refresh-slice.sql');
 

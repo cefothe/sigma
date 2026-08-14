@@ -97,7 +97,7 @@ INSERT OR IGNORE INTO interest_link_authorities (link_key, authority_id, authori
   ('person:ИВАН ПЕТРОВ ТЕСТОВ|ОБЩИНА ПРИМЕР|201122335', 'auth-plovdiv', 'Община Пример', 1, 429000, 'exact'),
   ('person:МАРИЯ ГЕОРГИЕВА ОБРАЗЦОВА|ОБЩИНА СОФИЯ|203445566|family', 'auth-sofia', 'Община София', 1, 190000, 'exact');
 
--- Trade Register evidence seals (#279, ADR-0033, migration 0006). NOT optional decoration: since the
+-- Trade Register evidence seals (#279, ADR-0033, migration 0009). NOT optional decoration: since the
 -- evidence ladder landed, SURFACED_OWNERSHIP requires a publishing seal, so a seeded link without one
 -- renders NOTHING — which is the exact failure this fixture exists to prevent. A seal per link, one per
 -- rung, so the dev surface shows the same three outcomes as production:

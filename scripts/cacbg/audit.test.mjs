@@ -43,7 +43,7 @@ function buildAndAudit({ bidders, decls = [], dis = [], links, seals = [], snaps
     CREATE TABLE interest_links(
       id TEXT PRIMARY KEY, link_key TEXT, person_id TEXT, eik TEXT, entity_key TEXT, match_method TEXT,
       publish_tier TEXT, bidder_id TEXT, relation TEXT, contemporaneous INT, contract_value_eur REAL, status TEXT);
-    -- The evidence seal (#279, migration 0006). The audit LEFT JOINs it, so it must exist even when a
+    -- The evidence seal (#279, migration 0009). The audit LEFT JOINs it, so it must exist even when a
     -- case deliberately leaves a link unsealed — an unsealed published link is itself a finding.
     CREATE TABLE interest_link_evidence(
       link_key TEXT PRIMARY KEY, evidence_kind TEXT, registry_role TEXT, matched_fact TEXT,
